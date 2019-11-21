@@ -17,7 +17,7 @@
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link href="site_libs/bootstrap-3.3.5/css/united.min.css" rel="stylesheet" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
@@ -581,10 +581,10 @@ This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a> analysis
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrong6895d72"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> 6895d72 </a>
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrong2dcee3d"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> 2dcee3d </a>
 </p>
 </div>
-<div id="strongRepositoryversionstrong6895d72" class="panel-collapse collapse">
+<div id="strongRepositoryversionstrong2dcee3d" class="panel-collapse collapse">
 <div class="panel-body">
 <p>
 Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility. The version displayed above was the version of the Git repository at the time these results were generated. <br><br> Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
@@ -648,6 +648,9 @@ Untracked files:
     Untracked:  output/sketch_of_crossVal_scheme.png
     Untracked:  workflowr_log.R
 
+Unstaged changes:
+    Modified:   analysis/IITA_StageII_CheckPredictionAccuracy1.Rmd
+
 </code></pre>
 <p>
 Note that any generated files, e.g. HTML, png, CSS, etc., are not included in this status report because it is ok for generated content to have uncommitted changes.
@@ -685,6 +688,23 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+html
+</td>
+<td>
+cb61b89
+</td>
+<td>
+wolfemd
+</td>
+<td>
+2019-11-21
+</td>
+<td>
+Build site.
+</td>
+</tr>
 <tr>
 <td>
 html
@@ -913,8 +933,8 @@ Publish the first set of analyses and files for IITA 2019 GS,
 <h1>Results</h1>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw">rm</span>(<span class="dt">list=</span><span class="kw">ls</span>());<span class="kw">gc</span>()</span></code></pre></div>
 <pre><code>          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
-Ncells  605215 32.4    1241060 66.3         NA   919191 49.1
-Vcells 1158418  8.9    8388608 64.0     102400  2033475 15.6</code></pre>
+Ncells  605218 32.4    1241045 66.3         NA   923374 49.4
+Vcells 1158477  8.9    8388608 64.0     102400  2035649 15.6</code></pre>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">library</span>(tidyverse); <span class="kw">library</span>(magrittr); <span class="kw">library</span>(cowplot); </span>
 <span id="cb6-2"><a href="#cb6-2"></a>cvNoOutliers&lt;-<span class="kw">tibble</span>(<span class="dt">Files=</span><span class="kw">list.files</span>(<span class="st">&quot;output/CrossVal_73019/&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span></span>
 <span id="cb6-3"><a href="#cb6-3"></a><span class="st">                  </span><span class="kw">mutate</span>(<span class="dt">Trait=</span><span class="kw">gsub</span>(<span class="st">&quot;CrossVal_&quot;</span>,<span class="st">&quot;&quot;</span>,Files),</span>
