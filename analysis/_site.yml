@@ -28,5 +28,5 @@ output:
     toc_depth: 3
     collapsed: no
     number_sections: no
-    theme: flatly
+    theme: darkly
     highlight: tango
