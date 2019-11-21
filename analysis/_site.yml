@@ -1,7 +1,7 @@
 name: "IITA_2019GS"
 output_dir: ../docs
 navbar:
-  title: IITA 2019 GS
+  title: IITA_2019GS
   left:
   - text: "Synopsis"
     href: index.html
