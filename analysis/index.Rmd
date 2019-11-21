@@ -1,11 +1,41 @@
 ---
-title: "Home"
-site: workflowr::wflow_site
-output:
-  workflowr::wflow_html:
-    toc: false
+title: "IITA Genomic Selection 2019"
+author: "wolfemd"
+date: "2019-July"
+output: workflowr::wflow_html
 editor_options:
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
-Welcome to my research website.
+Purpose of this section will be for background, summary, notes and future directions re: IITA GS-related analyses conducted in 2019.
+
+# Analysis Steps
+
+1. [Prepare the training data](IITA_PrepareTrainingData.html)
+2. [Stage I: Get BLUPs](IITA_StageI_GetBLUPs.html)
+3. [Stage II: Cross-validation Run 1](IITA_StageII_CheckPredictionAccuracy1.Rmd)
+4. [Stage II: Cross-validation Run 2](IITA_StageII_CheckPredictionAccuracy2.Rmd)
+5. [Stage II: Genomic prediction of GS C4](IITA_StageII_Predict_C4.Rmd)
+
+
+# Standardization ToDo's
+
+1. *PrepareTrainingData*
+  + The raw data for IITA trials is >500Mb, far to big for GitHub. How to share?
+  + _Group and select trials to analyze._ Manual creation / curation of the variable `TrialType`, and selection of trials is tedious. Upgrading meta-data on DB and making decisions about which trials to download in the first place could alleviate this. Would have downstream consequences for the code, which would need fixing. 
+  + _Traits and TraitAbbreviations._ Preselection of traits and DB-automated abbreviations would eliminate this manual step.
+  + _Assign genos to phenos._ Currently, requires alot of user (my) input, in the form of external flat files that I have put together over time. The database meta-information needs be added and the download functionality put in place to explicitly match DNA-samples to plots in downloaded trial data.
+  + _PerArea calculations._ Improvements to meta-information on the DB are still needed to ensure the correct plot spacing and sizes are used to compute fresh root yields correctly. Using max(NOHAV) from each trial, at pressent. 
++ _Season-wide mean disease._ Currently depends on which traits and months-after-planting are in the dataset. Solvable with changes in future R code.
++ A few trials have variants on the most common / consensus locationName, so I have to fix them. 
++ _Detect experimental designs._ My code to detect designs is standardized, and doesn't require user input. However, the need to do an _ad hoc_ procedure here could be eliminated by changes on the DB and by breeding programs QC of data. User input _is_ needed, or at least, I did a bunch of customization to the data at this point, which maybe could be avoided
++ TO DO / FUTURE DIRECTIONS:
+  - Add trial level curation here and/or
+  - Add outlier detection and removal and/or
+  - Standardized optimization of model for each trait
+  
+2. *StageI_GetBLUPs*
+3. *StageII_CheckPredictionAccuracy*
+  + Dosage matrices and kinship matrices are too large for GitHub. What is the current best-practice for sharing those?
+  
+  

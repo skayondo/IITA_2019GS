@@ -1,17 +1,33 @@
 name: "IITA_2019GS"
 output_dir: ../docs
 navbar:
-  title: "IITA_2019GS"
+  title: IITA 2019 GS
   left:
-  - text: Home
+  - text: "Synopsis"
     href: index.html
-  - text: About
+  - text: "Prepare Training Data"
+    href: IITA_PrepareTrainingData.html
+  - text: "Stage I: Get BLUPs"
+  - text: "Stage II"
+  - text: "Cross-validation analysis 1"
+    href: IITA_StageII_CheckPredictionAccuracy1.html
+  - text: "Cross-validation analysis 2"
+    href: IITA_StageII_CheckPredictionAccuracy2.html
+  - text: "Genomic prediction of GS C4"
+    href: IITA_StageII_Predict_C4.html
+  - text: "Contact"
     href: about.html
-  - text: License
+  - text: "License"
     href: license.html
 output:
   workflowr::wflow_html:
-    toc: yes
-    toc_float: yes
-    theme: cosmo
-    highlight: textmate
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    collapsed: false
+    number_sections: false
+    theme: sandstone
+    highlight: tango
+    css: style.css
+    lib_dir: site_libs
+    self_contained: no
