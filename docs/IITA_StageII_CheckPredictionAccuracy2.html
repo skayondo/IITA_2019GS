@@ -431,16 +431,16 @@ div.tocify {
   <a href="IITA_PrepareTrainingData.html">Prepare Training Data</a>
 </li>
 <li>
-  <a href="IITA_StageI_GetBLUPs.html">Stage I: Get BLUPs</a>
+  <a href="IITA_StageI_GetBLUPs.html">Get BLUPs</a>
 </li>
 <li>
-  <a href="IITA_StageII_CheckPredictionAccuracy1.html">Stage II: Cross-validation analysis 1</a>
+  <a href="IITA_StageII_CheckPredictionAccuracy1.html">Cross-validation round 1</a>
 </li>
 <li>
-  <a href="IITA_StageII_CheckPredictionAccuracy2.html">Stage II: Cross-validation analysis 2</a>
+  <a href="IITA_StageII_CheckPredictionAccuracy2.html">Cross-validation round 2</a>
 </li>
 <li>
-  <a href="IITA_StageII_Predict_C4.html">Stage II: Genomic prediction of GS C4</a>
+  <a href="IITA_StageII_Predict_C4.html">Get GEBV for GS C4</a>
 </li>
 <li>
   <a href="about.html">Contact</a>
@@ -585,10 +585,10 @@ This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a> analysis
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrong695a797"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> 695a797 </a>
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstronge8b42df"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> e8b42df </a>
 </p>
 </div>
-<div id="strongRepositoryversionstrong695a797" class="panel-collapse collapse">
+<div id="strongRepositoryversionstronge8b42df" class="panel-collapse collapse">
 <div class="panel-body">
 <p>
 Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility. The version displayed above was the version of the Git repository at the time these results were generated. <br><br> Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
@@ -689,6 +689,23 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+html
+</td>
+<td>
+43e9d5d
+</td>
+<td>
+wolfemd
+</td>
+<td>
+2019-11-21
+</td>
+<td>
+Build site.
+</td>
+</tr>
 <tr>
 <td>
 html
@@ -866,8 +883,8 @@ Publish the first set of analyses and files for IITA 2019 GS,
 <h1>Results</h1>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw">rm</span>(<span class="dt">list=</span><span class="kw">ls</span>());<span class="kw">gc</span>()</span></code></pre></div>
 <pre><code>          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
-Ncells  605197 32.4    1259562 67.3         NA   886271 47.4
-Vcells 1158306  8.9    8388608 64.0     102400  1958857 15.0</code></pre>
+Ncells  605216 32.4    1241274 66.3         NA   911399 48.7
+Vcells 1158367  8.9    8388608 64.0     102400  2028587 15.5</code></pre>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">library</span>(tidyverse); <span class="kw">library</span>(magrittr); <span class="kw">library</span>(cowplot); </span>
 <span id="cb6-2"><a href="#cb6-2"></a>cvNoOutliers&lt;-<span class="kw">tibble</span>(<span class="dt">Files=</span><span class="kw">list.files</span>(<span class="st">&quot;output/CrossVal_73019/&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span></span>
 <span id="cb6-3"><a href="#cb6-3"></a><span class="st">                  </span><span class="kw">mutate</span>(<span class="dt">Trait=</span><span class="kw">gsub</span>(<span class="st">&quot;CrossVal_&quot;</span>,<span class="st">&quot;&quot;</span>,Files),</span>
