@@ -1,0 +1,309 @@
+---
+title: "Genomic Prediction Analysis - Stage I of II: get BLUPs"
+author: "wolfemd"
+date: "2019-7-26"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = F, tidy = T)
+```
+
+# Objective
+
+**Two-stage** genomic prediction refers to the following procedure:
+
+**Stage 1:** Fit a linear mixed model to the data *without* genomic data. Individuals (e.g. clones / accessions) are modeled as independent and identically distributed (*i.i.d.*) random effects. The BLUPs for this random effect represent the measurable total genetic values of each individual. All the experimental design variation, e.g. replication and blocking effects have been controlled for in the creation of our new response variable, the BLUPs from the gneotype random effect.
+
+**Stage 2:** Using a modified version of the BLUPs from step 1 as the response variable, fit a genomic prediction model, which now has reduced size because the number of observations is now the same as the number of individuals.
+
+**NOTE:** In the animal breeding literature **single-step** often refers to predictions that combine pedigree and marker information simultaneously. That *is not* our meaning here.
+
+The code below represents Stage I.
+
+# Set-up training datasets
+
+Read in the trial data and group it by trait
+```{r, eval=F}
+rm(list=ls()); gc()
+library(tidyverse);library(magrittr)
+trials<-readRDS("data/IITA_ExptDesignsDetected_72619.rds")
+phenos<-trials %>% 
+  unnest(TrialData) %>% 
+  select(programName,locationName,studyYear,TrialType,studyName,
+         CompleteBlocks,IncompleteBlocks,
+         yearInLoc,trialInLocYr,repInTrial,blockInRep,observationUnitDbId,
+         germplasmName,FullSampleName,
+         Trait,Value,MaxNOHAV,NOHAV,PropHAV,
+         TCHARTcovar,CMDcovar) %>% 
+  mutate(GID=ifelse(!is.na(FullSampleName),FullSampleName,germplasmName),
+         IncompleteBlocks=ifelse(IncompleteBlocks==TRUE,"Yes","No"),
+         CompleteBlocks=ifelse(CompleteBlocks==TRUE,"Yes","No")) %>% 
+  group_by(Trait) %>% 
+  nest(.key = "TrainingData")
+rm(trials); gc()
+```
+For certain traits, made alternative versions after discussion with IYR. 
+
+Curates yield traits based on PropHAV, and CMD severity. 
+
+Splits DM according to TCHART, with yellow when >2, else white.
+```{r, eval=F}
+# Set yield traits to missing if <5% or 75% plants harvested (PropHAV)
+phenos %<>% 
+  bind_rows(
+    phenos %>% 
+      filter(Trait %in% c("logRTNO","logFYLD","logTOPYLD")) %>% 
+      mutate(TrainingData=map(TrainingData,~filter(.,!is.na(PropHAV) & PropHAV>=0.5)),
+             Trait=paste0(Trait,"_propHAVpt5"))
+  ) %>% 
+  bind_rows(
+    phenos %>% 
+      filter(Trait %in% c("logRTNO","logFYLD","logTOPYLD")) %>% 
+      mutate(TrainingData=map(TrainingData,~filter(.,!is.na(PropHAV) & PropHAV>=0.75)),
+             Trait=paste0(Trait,"_propHAVpt75"))
+  ) %>% 
+  bind_rows(
+    phenos %>% # Or set missing when NOHAV<5
+      filter(Trait %in% c("logRTNO","logFYLD","logTOPYLD")) %>% 
+      mutate(TrainingData=map(TrainingData,~filter(.,!is.na(NOHAV) & NOHAV>5)),
+             Trait=paste0(Trait,"_nohav5"))
+  )
+phenos %<>% 
+  bind_rows( 
+    phenos %>% # Or set missing if CMD severity was>2
+      filter(Trait %in% c("logRTNO","logFYLD","logTOPYLD")) %>% 
+      mutate(TrainingData=map(TrainingData,~filter(.,!is.na(CMDcovar) & CMDcovar<=2)),
+             Trait=paste0(Trait,"_lowCMD"))
+  ) %>% 
+  bind_rows(
+    phenos %>% # white roots only
+      filter(Trait=="DM") %>% 
+      mutate(TrainingData=map(TrainingData,~filter(.,!is.na(TCHARTcovar) & TCHARTcovar<=2)),
+             Trait=paste0(Trait,"_white"))
+  ) %>% 
+  bind_rows(
+    phenos %>% # yellow roots only
+      filter(Trait=="DM") %>% 
+      mutate(TrainingData=map(TrainingData,~filter(.,!is.na(TCHARTcovar) & TCHARTcovar>2)),
+             Trait=paste0(Trait,"_yellow"))
+  )
+```
+
+In addition, we wanted to do at list a basic check on the cost/benefit of continuing to use data from earlier than 2012. So for every trait possible, I 
+
+1) All Historical Data Included
+2) IITA data post-2012
+
+```{r, eval=F}
+phenos %<>% 
+  mutate(TrainingData=map(TrainingData,~filter(.,as.numeric(studyYear)>2012)),
+         Dataset="2013toPresent") %>% 
+  bind_rows(phenos %>% 
+              mutate(Dataset="HistoricalDataIncluded") %>% 
+              filter(!Trait %in% c("BRNHT1","PLTHT"))) # BRNHT1 and PLTHT lacked "historical" observations
+# phenos %>% 
+#   mutate(Nobs=map_dbl(TrainingData,~nrow(.))) %>% 
+#   select(Trait,Nobs,Dataset) %>% 
+#   spread(Dataset,Nobs) %>% 
+#   mutate(HowManyHistoricalObs=HistoricalDataIncluded-`2013toPresent`) %>% # %$% summary(HowManyHistoricalObs)
+#   arrange(HowManyHistoricalObs)
+# Basically, only BRNHT1 and PLTHT lacked "historical" observations
+```
+
+# Fit Stage I mixed-model
+
+
+IID models, get BLUPs from asreml
+
+Set-up the models to be fit for each data chunk
+```{r, eval=F}
+library(furrr) # for parallel processing using purrr functions
+options(mc.cores=12)
+plan(multiprocess)
+library(asreml) # cbsurobbins license as of July 2019
+phenos %<>%
+  mutate(asFixedFormula="Value ~ yearInLoc",
+         asFixedFormula=ifelse(grepl("logRTNO",Trait) | grepl("logFYLD",Trait) | grepl("logTOPYLD",Trait),
+                               paste0(asFixedFormula," + PropHAV"),asFixedFormula),
+         asRandFormula=paste0("~idv(GID) + idv(trialInLocYr) + at(CompleteBlocks,'Yes'):repInTrial ",
+                              "+ at(IncompleteBlocks,'Yes'):blockInRep"))
+```
+Fit the models in parallel, keeping only key information to save space 
+
+Save for future analysis.
+```{r, eval=F}
+asModelsFit<-phenos %>%
+  mutate(fitAS=future_pmap(.,function(asFixedFormula,asRandFormula,TrainingData,...){
+    # debugging 
+    # -------------
+    # asFixedFormula<-phenos$asFixedFormula[[1]]
+    # asRandFormula<-phenos$asRandFormula[[1]]
+    # TrainingData<-phenos$TrainingData[[1]]
+    # -------------
+    out<-asreml(as.formula(asFixedFormula),
+                random = as.formula(asRandFormula),
+                data = TrainingData, maxiter = 40,workspace=400e6)
+    ll<-summary(out,all=T)$loglik
+    varcomp<-summary(out,all=T)$varcomp
+      Vg<-varcomp["GID!GID.var","component"]
+      Ve<-varcomp["R!variance","component"]
+      H2=Vg/(Vg+Ve)
+      blups<-summary(out,all=T)$coef.random %>% 
+        as.data.frame %>% 
+        rownames_to_column(var = "GID") %>% 
+        select(GID,solution,`std error`) %>% 
+        filter(grepl("GID",GID)) %>% 
+        rename(BLUP=solution) %>% 
+        mutate(GID=gsub("GID_","",GID),
+               PEV=`std error`^2, # asreml specific
+               REL=1-(PEV/Vg), # Reliability 
+               drgBLUP=BLUP/REL, # deregressed BLUP
+               WT=(1-H2)/((0.1 + (1-REL)/REL)*H2)) # weight for use in Stage 2
+      out<-tibble(loglik=ll,Vg,Ve,H2,
+                  blups=list(blups),varcomp=list(varcomp))
+    return(out) }))
+asModelsFit %<>% 
+  select(-TrainingData,-asFixedFormula,-asRandFormula) %>% 
+  unnest(fitAS)
+saveRDS(asModelsFit,file="data/iita_blupsForCrossVal_72619.rds")
+
+```
+
+# Curate field data
+
+Redo set-up of training data chunks. Based on preliminary results, discontinued anlaysis for the yield trait variants. 
+
+Curation in this case is just outlier removal based on residuals, followed by refitting of the Stage I mixed-model to get new BLUPs.
+```{r, eval=F}
+rm(list=ls()); gc()
+library(tidyverse);library(magrittr)
+trials<-readRDS("data/IITA_ExptDesignsDetected_72619.rds")
+phenos<-trials %>% 
+  unnest(TrialData) %>% 
+  dplyr::select(programName,locationName,studyYear,TrialType,studyName,
+         CompleteBlocks,IncompleteBlocks,
+         yearInLoc,trialInLocYr,repInTrial,blockInRep,observationUnitDbId,
+         germplasmName,FullSampleName,
+         Trait,Value,MaxNOHAV,NOHAV,PropHAV,
+         TCHARTcovar,CMDcovar) %>% 
+  mutate(GID=ifelse(!is.na(FullSampleName),FullSampleName,germplasmName),
+         IncompleteBlocks=ifelse(IncompleteBlocks==TRUE,"Yes","No"),
+         CompleteBlocks=ifelse(CompleteBlocks==TRUE,"Yes","No")) %>% 
+  group_by(Trait) %>% 
+  nest(.key = "TrainingData")
+rm(trials); gc()
+phenos %<>%
+  bind_rows(
+    phenos %>% 
+      filter(Trait=="DM") %>% 
+      mutate(TrainingData=map(TrainingData,~filter(.,!is.na(TCHARTcovar) & TCHARTcovar<=2)),
+             Trait=paste0(Trait,"_white"))
+  ) %>% 
+  bind_rows(
+    phenos %>% 
+      filter(Trait=="DM") %>% 
+      mutate(TrainingData=map(TrainingData,~filter(.,!is.na(TCHARTcovar) & TCHARTcovar>2)),
+             Trait=paste0(Trait,"_yellow"))
+  )
+phenos %<>%
+  mutate(asFixedFormula="Value ~ yearInLoc",
+         asFixedFormula=ifelse(grepl("logRTNO",Trait) | grepl("logFYLD",Trait) | grepl("logTOPYLD",Trait),
+                               paste0(asFixedFormula," + PropHAV"),asFixedFormula),
+         asRandFormula=paste0("~idv(GID) + idv(trialInLocYr) + at(CompleteBlocks,'Yes'):repInTrial ",
+                              "+ at(IncompleteBlocks,'Yes'):blockInRep"))
+
+```
+## Function to detect outliers
+
+Refit mixed-models and this time recover studentized residuals and flag outliers as observations with |studentized-residuals|>3.3
+```{r, eval=F}
+fitASmodelsWithOutlierDetect<-function(asFixedFormula,asRandFormula,TrainingData,...){
+  # debug function
+  # ---------------------------
+  # asFixedFormula<-phenos$asFixedFormula[[1]]
+  # asRandFormula<-phenos$asRandFormula[[1]]
+  # TrainingData<-phenos$TrainingData[[1]]
+  #rm(asFixedFormula,asRandFormula,TrainingData); gc()
+  # ---------------------------
+  out<-asreml(as.formula(asFixedFormula),
+              random = as.formula(asRandFormula),
+              data = TrainingData, 
+              maxiter = 40,workspace=400e6,aom=T)
+  stdRes <- out$aom$R[,"stdCondRes"]
+  nedf <- out$nedf 
+  studRes <- stdRes / sqrt( (nedf - stdRes^2)/(nedf - 1) ) 
+  outliers<-which(abs(studRes)>3.3)
+  ll<-summary(out,all=T)$loglik
+  varcomp<-summary(out,all=T)$varcomp
+  vg<-varcomp["GID!GID.var","component"]
+  ve<-varcomp["R!variance","component"]
+  H2tmp<-vg/(vg+ve)
+  blups<-summary(out,all=T)$coef.random %>% 
+    as.data.frame %>% 
+    rownames_to_column(var = "GID") %>% 
+    dplyr::select(GID,solution,`std error`) %>% 
+    filter(grepl("GID",GID)) %>% 
+    rename(BLUP=solution) %>% 
+    mutate(GID=gsub("GID_","",GID),
+           PEV=`std error`^2,
+           REL=1-(PEV/vg),
+           drgBLUP=BLUP/REL,
+           WT=(1-H2tmp)/((0.1 + (1-REL)/REL)*H2tmp))
+  out<-list(loglik=ll,Vg=vg,Ve=ve,H2=H2tmp,
+            blups=list(blups),
+            varcomp=list(varcomp),
+            Outliers=list(outliers))
+  return(out) }
+```
+## Run two cycles of outlier remval
+Fit models with asreml
+```{r, eval=F}
+library(furrr)
+options(mc.cores=12); plan(multiprocess)
+library(asreml)
+asModelsFit<-phenos %>%
+      mutate(fitAS=future_pmap(.,fitASmodelsWithOutlierDetect))
+```
+Count and remove outliers
+```{r, eval=F}
+asModelsFit %<>% 
+      mutate(NoutR1=map_dbl(fitAS,~length(.$Outliers[[1]])))
+asModelsFit %<>% 
+      mutate(OutliersR1=map(fitAS,~.$Outliers[[1]]))
+asModelsFit %<>% 
+      mutate(TrainingData=map2(TrainingData,fitAS,function(TrainingData,fitAS){
+            outliers2remove<-fitAS$Outliers[[1]]
+            out<-TrainingData[-outliers2remove,]
+            return(out) }))
+```
+Refit models with asreml after removing outliers
+```{r, eval=F}
+asModelsFit %<>%
+      mutate(fitAS=future_pmap(.,fitASmodelsWithOutlierDetect))
+```
+Repeat for a second cycle of outlier removal
+```{r, eval=F}
+asModelsFit %<>% 
+      mutate(NoutR2=map_dbl(fitAS,~length(.$Outliers[[1]])),
+             OutliersR2=map(fitAS,~.$Outliers[[1]]),
+             TrainingData=map2(TrainingData,fitAS,function(TrainingData,fitAS){
+                   outliers2remove<-fitAS$Outliers[[1]]
+                   out<-TrainingData[-outliers2remove,]
+                   return(out) }),
+             fitAS=future_pmap(.,fitASmodelsWithOutlierDetect))
+```
+Format and save blups for cross-validation, fit after 2 rounds of outlier removal
+```{r, eval=F}
+asModelsFit %<>%
+      dplyr::select(-TrainingData,-asFixedFormula,-asRandFormula) %>% 
+      mutate(fitAS=map(fitAS,as_tibble)) %>% 
+      unnest(fitAS)
+saveRDS(asModelsFit,file="data/iita_blupsForCrossVal_outliersRemoved_73019.rds")
+```
+
+# Next step
+
+[Stage II: Cross-validation Run 1](IITA_StageII_CheckPredictionAccuracy1.Rmd)

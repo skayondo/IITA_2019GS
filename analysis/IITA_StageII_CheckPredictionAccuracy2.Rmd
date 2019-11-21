@@ -1,0 +1,208 @@
+---
+title: "Genomic Prediction Analysis - Stage II of II: Cross-validation Round 2"
+author: "wolfemd"
+date: "2019-7-29"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = F, tidy = T)
+```
+
+# Objective
+
+This time with the outliers-removed BLUPs. Based on results in round 1, did not continue with some of the traits.
+
+# Set-up training data
+```{r, eval=F}
+rm(list=ls()); gc()
+library(tidyverse); library(magrittr); 
+blups<-readRDS(file="data/iita_blupsForCrossVal_outliersRemoved_73019.rds")
+K<-readRDS(file=paste0("/workdir/IITA_2019GS/Kinship_IITA_TrainingPop_72619.rds"))
+blups %<>%
+      rename(trainingData=blups) %>% 
+      mutate(trainingData=map(trainingData,~filter(.,GID %in% rownames(K))),)
+tms13f<-rownames(K) %>% grep("TMS13F|2013_",.,value = T); length(tms13f) # 2395
+tms14f<-rownames(K) %>% grep("TMS14F",.,value = T); length(tms14f) # 2171
+tms15f<-rownames(K) %>% grep("TMS15F",.,value = T); length(tms15f) # 835
+gg<-setdiff(rownames(K),c(tms13f,tms14f,tms15f)); length(gg) # 1228 (not strictly gg)
+
+blups %<>%
+    mutate(seed_of_seeds=1:n(),
+           seeds=map(seed_of_seeds,function(seed_of_seeds,reps=5){ 
+               set.seed(seed_of_seeds); 
+               outSeeds<-sample(1:1000,size = reps,replace = F); 
+               return(outSeeds) }))
+blups %<>%
+      select(-varcomp); gc()
+```
+
+# Cross-validation function 
+```{r, eval=F}
+# trainingData<-blups$trainingData[[1]]; seeds<-blups$seeds[[1]]; nfolds<-5; reps<-5;
+crossValidateFunc<-function(Trait,trainingData,seeds,nfolds=5,reps=5,ncores=50,...){
+      trntstdata<-trainingData %>% 
+            filter(GID %in% rownames(K))
+      K1<-K[rownames(K) %in% trntstdata$GID,
+            rownames(K) %in% trntstdata$GID]
+      # rm(K,trainingData); gc()
+      # seed<-seeds[[1]]
+      # Nfolds=nfolds
+      makeFolds<-function(Nfolds=nfolds,seed){
+            genotypes<-rownames(K1)
+            
+            set.seed(seed)
+            seed_per_group<-sample(1:10000,size = 4,replace = FALSE)
+      
+            set.seed(seed_per_group[1])
+            FoldsThisRep_tms15<-tibble(CLONE=genotypes[genotypes %in% tms15f],
+                                       Group="TMS15F") %>% 
+                  mutate(Folds=sample(1:Nfolds,nrow(.),replace=T)) %>% 
+                  arrange(Folds) %>% 
+                  group_by(Group,Folds) %>% 
+                  nest(.key = Test)
+            set.seed(seed_per_group[2])
+            FoldsThisRep_tms14<-tibble(CLONE=genotypes[genotypes %in% tms14f],
+                                       Group="TMS14F") %>% 
+                  mutate(Folds=sample(1:Nfolds,nrow(.),replace=T)) %>% 
+                  arrange(Folds) %>% 
+                  group_by(Group,Folds) %>% 
+                  nest(.key = Test)
+            set.seed(seed_per_group[3])
+            FoldsThisRep_tms13<-tibble(CLONE=genotypes[genotypes %in% tms13f],
+                                       Group="TMS13F") %>% 
+                  mutate(Folds=sample(1:Nfolds,nrow(.),replace=T)) %>% 
+                  arrange(Folds) %>% 
+                  group_by(Group,Folds) %>% 
+                  nest(.key = Test)
+            set.seed(seed_per_group[4])
+            FoldsThisRep_gg<-tibble(CLONE=genotypes[genotypes %in% gg],
+                                       Group="GGetc") %>% 
+                  mutate(Folds=sample(1:Nfolds,nrow(.),replace=T)) %>% 
+                  arrange(Folds) %>% 
+                  group_by(Group,Folds) %>% 
+                  nest(.key = Test)
+           FoldsThisRep<-bind_rows(FoldsThisRep_tms15,FoldsThisRep_tms14) %>% 
+                  bind_rows(FoldsThisRep_tms13) %>% 
+                  bind_rows(FoldsThisRep_gg) %>% 
+                  mutate(Test=map(Test,~.$CLONE),
+                         Train=map(Test,~genotypes[!genotypes %in% .]))
+            return(FoldsThisRep) }
+      
+    crossval<-tibble(Rep=1:reps,seed=unlist(seeds)[1:reps]) %>% 
+        mutate(Folds=map2(Rep,seed,~makeFolds(Nfolds=nfolds,seed=.y))) %>% 
+        unnest()
+
+    #Test<-crossval$Test[[1]]; Train<-crossval$Train[[1]]
+    crossValidate<-function(Test,Train){ 
+      train<-Train
+      test<-Test
+      trainingdata<-trntstdata %>% 
+        filter(GID %in% train) %>% 
+        mutate(GID=factor(GID,levels=rownames(K1)))
+       
+      require(sommer)
+      proctime<-proc.time()
+      fit <- mmer(fixed = drgBLUP ~1,
+                  random = ~vs(GID,Gu=K1),
+                  weights = WT,
+                  data=trainingdata) 
+      proc.time()-proctime
+      
+      x<-fit$U$`u:GID`$drgBLUP 
+      gebvs<-tibble(GID=names(x),
+                    GEBV=as.numeric(x))
+      
+      accuracy<-gebvs %>% 
+            filter(GID %in% test) %>% 
+            left_join(
+                  trntstdata %>% 
+                        dplyr::select(GID,BLUP) %>% 
+                        filter(GID %in% test)) %$% 
+            cor(GEBV,BLUP, use='complete.obs') 
+    return(accuracy)
+    }
+    
+    require(furrr)
+    options(mc.cores=ncores)
+    plan(multiprocess)
+    crossval<-crossval %>% 
+          mutate(accuracy=future_map2(Test,Train,~crossValidate(Test=.x,Train=.y)))
+    saveRDS(crossval,file=paste0("/workdir/IITA_2019GS/CrossVal_73019/",
+                                 "CrossVal_",Trait,"_OutliersRemoved_73019.rds"))
+    rm(list=ls()); gc() 
+    }
+```
+# Run CV on two servers
+
+# cbsulm14 (112)
+```{r, eval=F}
+blups %>% 
+      mutate(CVaccuracy=pmap(.,crossValidateFunc))
+#saveRDS(cvresults_1,file="/workdir/IITA_2019GS/CrossValResults_IITA_TrainingPop_1_72719.rds")
+```
+
+# Results
+```{r}
+rm(list=ls());gc()
+library(tidyverse); library(magrittr); library(cowplot); 
+cvNoOutliers<-tibble(Files=list.files("output/CrossVal_73019/")) %>% 
+                  mutate(Trait=gsub("CrossVal_","",Files),
+                         Trait=gsub("_OutliersRemoved_73019.rds","",Trait),
+                         Dataset="OutliersRemoved") %>% 
+                  mutate(cvResults=map(Files,~readRDS(paste0("output/CrossVal_73019/",.)))) %>% 
+      dplyr::select(-Files)
+cvWithOutliers<-tibble(Files=list.files("output/CrossVal_72719/")) %>% 
+      filter(grepl("HistoricalDataIncluded|BRNHT1|PLTHT",Files)) %>% 
+      mutate(Trait=gsub("CrossVal_","",Files),
+             Trait=gsub("_2013toPresent_72719.rds","",Trait),
+             Trait=gsub("_HistoricalDataIncluded_72719.rds","",Trait),
+             Dataset="NoOutlierRemoval") %>% 
+      filter(Trait %in% cvNoOutliers$Trait) %>% 
+      mutate(cvResults=map(Files,~readRDS(paste0("output/CrossVal_72719/",.)))) %>% 
+      dplyr::select(-Files)
+cv<-bind_rows(cvNoOutliers,
+              cvWithOutliers)
+
+cv %<>% 
+  unnest(cols = cvResults) %>% 
+  mutate(Ntrain=map_dbl(Train,length),
+         Ntest=map_dbl(Test,length)) %>% 
+  select(-Test,-Train) %>% 
+  unnest(cols = accuracy)
+```
+
+## Figure 1
+
+I did an additional cross-validation, using BLUPs produced after two rounds of model-fitting, followed-by outlier removal. I defined outliers as observations with abs(studentized residuals)>3.3.
+Overall, the improvement is not consistent or large, but I’d probably trend towards using the data with outliers removed.
+
+By genetic group
+```{r, fig.width=9, fig.height=6}
+library(viridis)
+cv %>% 
+      ggplot(.,aes(x=Trait,y=accuracy,fill=Dataset)) + 
+      geom_boxplot() + 
+      facet_grid(.~Group,space='free_x',scale='free_x') +
+      geom_hline(yintercept = 0,color='darkred',size=1.25) + 
+      theme_bw() + 
+      theme(axis.text.x = element_text(angle=90,face='bold',size=14)) +
+      scale_fill_viridis_d()
+```
+
+## Figure 2
+
+overall
+```{r, fig.width=9, fig.height=6}
+library(viridis)
+cv %>% 
+      ggplot(.,aes(x=Trait,y=accuracy,fill=Dataset)) + 
+      geom_boxplot() + 
+      geom_hline(yintercept = 0,color='darkred',size=1.25) + 
+      theme_bw() + 
+      theme(axis.text.x = element_text(angle=90,face='bold',size=14)) +
+      scale_fill_viridis_d()
+```
+

@@ -1,0 +1,239 @@
+---
+title: "Predict GEBV for IITA GS C4"
+author: "wolfemd"
+date: "2019-7-30"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = F, tidy = T)
+```
+
+# Prep. data for genomic prediction
+
+## Load snps
+```{r, eval=F}
+rm(list=ls()); gc()
+library(tidyverse); library(magrittr); 
+snps<-readRDS(file=paste0("/workdir/ImputationStageIII_72619/",
+                          "DosageMatrix_RefPanelAndGSprogeny_ReadyForGP_73019.rds"))
+```
+## Load blups
+```{r, eval=F}
+blupsNoOut<-readRDS(file="data/iita_blupsForCrossVal_outliersRemoved_73019.rds")
+blups<-readRDS(file="data/iita_blupsForCrossVal_72619.rds")
+
+blups<-blupsNoOut %>% 
+  dplyr::select(Trait,blups) %>% 
+  mutate(OutliersRemoved=TRUE) %>% 
+  bind_rows(
+    blups %>% 
+      filter(Dataset=="HistoricalDataIncluded" | Trait %in% c("BRNHT1","PLTHT")) %>% 
+      dplyr::select(Trait,blups) %>% 
+      mutate(OutliersRemoved=FALSE))
+```
+# Match TMS18F germNames to DArT genos
+For the TMS18F, there are some phenotypes available now. 
+```{r, eval=F}
+gidsInPhenos<-tibble(GID=blups %>% unnest() %$% GID %>% unique)
+table(gidsInPhenos$GID %in% rownames(snps)) # 6629 (that only includes GG through C3)
+
+# gidsInPhenos$GID %>% grep("TMS18",.,value=T) %>% length # 1452
+# rownames(snps) %>% grep("TMS18",.,value=T) %>% length # 2420
+gidsInPhenos %<>% 
+  left_join(
+    tibble(dartName=rownames(snps) %>% grep("TMS18",.,value=T)) %>% 
+      separate(dartName,c("GID","dartID"),"_",extra = 'merge',remove = F) %>% 
+      semi_join(gidsInPhenos) %>% 
+      group_by(GID) %>% 
+      slice(1) %>% 
+      ungroup()) %>% 
+  mutate(NewName=ifelse(!is.na(dartName),dartName,GID))
+
+blups %<>% 
+  unnest(blups) %>% 
+  left_join(gidsInPhenos) %>% 
+  mutate(GID=NewName) %>% 
+  dplyr::select(-dartName,-dartID,-NewName) %>% 
+  group_by(Trait,OutliersRemoved) %>% 
+  nest(.key = "trainingData")
+```
+
+# Make a kinship matrix including C4
+
+## Subset snps
+```{r, eval=F}
+table(gidsInPhenos$NewName %in% rownames(snps))
+iitaSamples2keep<-union(rownames(snps) %>% .[. %in% gidsInPhenos$NewName],
+                        rownames(snps) %>% grep("TMS18",.,value = T)) #%>% length # 9049
+snps<-snps[iitaSamples2keep,]
+```
+
+## MAF>1% filter
+```{r, eval=F}
+maf_filter<-function(snps,thresh){
+  freq<-colMeans(snps, na.rm=T)/2; maf<-freq;
+  maf[which(maf > 0.5)]<-1-maf[which(maf > 0.5)]
+  snps1<-snps[,which(maf>thresh)];
+  return(snps1) }
+snps %<>% maf_filter(.,0.01)
+dim(snps) # [1]  9049 68029
+```
+
+## Make kinships
+```{r, eval=F}
+library(tidyverse); library(magrittr); library(rrBLUP)
+K<-rrBLUP::A.mat(snps-1)
+
+saveRDS(K,file=paste0("/workdir/marnin/IITA_2019GS/",
+                      "Kinship_IITA_SamplesForGP_73119.rds"))
+saveRDS(snps,file=paste0("/workdir/marnin/IITA_2019GS/",
+                         "DosageMatrix_IITA_SamplesForGP_73119.rds"))
+rm(snps); gc()
+```
+
+
+# PCA 
+
+On cbsurobbins
+```{r, eval=F}
+pca<-prcomp(snps, scale=T, center=T) 
+pc_scores<-pca$x %>% 
+  .[,1:15] %>% 
+  as.data.frame %>% 
+  rownames_to_column(var="FullSampleName") %>% 
+  mutate(GeneticGroup=NA,
+         GeneticGroup=ifelse(grepl("TMS13F|2013_",FullSampleName),"TMS13F",
+                             ifelse(grepl("TMS14F",FullSampleName),"TMS14F",
+                                    ifelse(grepl("TMS15F",FullSampleName),"TMS15F",
+                                           ifelse(grepl("TMS18F",FullSampleName),"TMS18F","GGetc")))))
+```
+```{r, eval=F}
+summary(pca)$importance[,1:10] 
+```
+First two PCs _only_ explain about 9% of the genetic variance. 
+
+Save PCA results
+```{r, eval=F}
+saveRDS(pc_scores,file="output/PCscores_IITA_SamplesForGP_73119.rds")
+saveRDS(pca,file="/workdir/marnin/IITA_2019GS/PCA_IITA_SamplesForGP_73119.rds")
+rm(pca); gc()
+```
+
+
+```{r}
+rm(list=ls());gc()
+library(tidyverse); library(magrittr); library(cowplot); 
+pc_scores<-readRDS("output/PCscores_IITA_SamplesForGP_73119.rds")
+library(viridis)
+pc1v2<-pc_scores %>% 
+  ggplot(.,aes(x=PC1,y=PC2,color=GeneticGroup)) + 
+  geom_point() + 
+  theme_bw() + scale_color_viridis_d() + 
+  labs(x="PC1 (6%)",y="PC2 (3%)") + theme(legend.position = 'none')
+pc3v4<-pc_scores %>% 
+  ggplot(.,aes(x=PC3,y=PC4,color=GeneticGroup)) + 
+  geom_point() + 
+  theme_bw() + scale_color_viridis_d() + 
+  labs(x="PC3 (3%)",y="PC4 (3%)")
+plot_grid(pc1v2,pc3v4)
+```
+
+# Prediction 
+On cbsulm16
+
+## Load data for pred
+```{r, eval=F}
+rm(list=ls()); gc()
+library(tidyverse); library(magrittr); 
+K<-readRDS(file=paste0("/workdir/IITA_2019GS/Kinship_IITA_SamplesForGP_73119.rds"))
+blupsNoOut<-readRDS(file="data/iita_blupsForCrossVal_outliersRemoved_73019.rds")
+blups<-readRDS(file="data/iita_blupsForCrossVal_72619.rds")
+
+blups<-blupsNoOut %>% 
+  dplyr::select(Trait,blups) %>% 
+  mutate(OutliersRemoved=TRUE) %>% 
+  bind_rows(
+    blups %>% 
+      filter(Dataset=="HistoricalDataIncluded" | Trait %in% c("BRNHT1","PLTHT")) %>% 
+      dplyr::select(Trait,blups) %>% 
+      mutate(OutliersRemoved=FALSE))
+gidsInPhenos<-tibble(GID=blups %>% unnest() %$% GID %>% unique)
+gidsInPhenos %<>% 
+  left_join(
+    tibble(dartName=rownames(K) %>% grep("TMS18",.,value=T)) %>% 
+      separate(dartName,c("GID","dartID"),"_",extra = 'merge',remove = F) %>% 
+      semi_join(gidsInPhenos) %>% 
+      group_by(GID) %>% 
+      slice(1) %>% 
+      ungroup()) %>% 
+  mutate(NewName=ifelse(!is.na(dartName),dartName,GID))
+blups %<>% 
+  unnest(blups) %>% 
+  left_join(gidsInPhenos) %>% 
+  mutate(GID=NewName) %>% 
+  dplyr::select(-dartName,-dartID,-NewName) %>% 
+  filter(GID %in% rownames(K)) %>% 
+  group_by(Trait,OutliersRemoved) %>% 
+  nest(.key = "trainingData")
+```
+
+## Get GEBVs
+```{r, eval=F}
+require(sommer)
+require(furrr)
+options(future.globals.maxSize= 1500*1024^2)
+options(mc.cores=18)
+plan(multiprocess)
+proctime<-proc.time()
+blups %>% 
+  mutate(GEBV=future_pmap(.,function(Trait,trainingData,OutliersRemoved,...){
+    trndata<-trainingData %>% 
+      mutate(GID=factor(GID,levels=rownames(K)))
+    fit <- mmer(fixed = drgBLUP ~1,
+                random = ~vs(GID,Gu=K),
+                weights = WT,
+                data=trndata)
+    x<-fit$U$`u:GID`$drgBLUP 
+    gebvs<-tibble(GID=names(x),
+                  GEBV=as.numeric(x))
+    saveRDS(gebvs,file=paste0("output/",
+                              "GEBV_",Trait,"_OutliersEqual",OutliersRemoved,"_IITA_73119.rds"))
+    rm(fit); gc()}))
+proc.time() - proctime
+```
+
+## Format GEBV
+```{r, eval=F}
+gebvs<-list.files(path = "output/") %>% 
+  grep("GEBV_",.,value = T) %>% 
+  grep("_IITA_73119.rds",.,value = T) %>% 
+  tibble(Files=paste0("output/",.)) %>% 
+  mutate(Trait=gsub("output/GEBV_","",Files),
+         Trait=gsub("_IITA_73119.rds","",Trait)) %>% 
+  separate(Trait,c("Trait","OutliersRemoved"),"_OutliersEqual") %>% 
+  mutate(Files=map(Files,~readRDS(.))) %>% 
+  unnest(Files) %>% 
+  mutate(GeneticGroup=NA,
+         GeneticGroup=ifelse(grepl("TMS13F|2013_",GID),"TMS13F",
+                             ifelse(grepl("TMS14F",GID),"TMS14F",
+                                    ifelse(grepl("TMS15F",GID),"TMS15F",
+                                           ifelse(grepl("TMS18F",GID),"TMS18F","GGetc")))))
+
+```
+## Write GEBVs
+```{r, eval=F}
+gebvs %>% 
+  spread(Trait,GEBV) %>% 
+  group_by(OutliersRemoved) %>% 
+  nest() %>% 
+  mutate(data=map2(data,OutliersRemoved,function(data,OutliersRemoved){
+    write.csv(data,
+              file=paste0("output/GEBV_IITA_OutliersRemoved",OutliersRemoved,"_73119.csv"),
+              row.names = F) }))
+```
+
+
+

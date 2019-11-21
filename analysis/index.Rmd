@@ -1,6 +1,6 @@
 ---
 title: "IITA Genomic Selection 2019"
-author: "wolfemd"
+site: workflowr::wflow_site
 date: "2019-July"
 output: workflowr::wflow_html
 editor_options:
