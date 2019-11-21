@@ -1,28 +1,32 @@
-name: "IITA_2019GS"
+name: IITA_2019GS
 output_dir: ../docs
 navbar:
   title: IITA_2019GS
   left:
-  - text: "Synopsis"
+  - text: Synopsis
     href: index.html
-  - text: "Prep. Training Data"
+  - text: Prep. Training Data
     href: IITA_PrepareTrainingData.html
-  - text: "Get BLUPs"
+  - text: Get BLUPs
     href: IITA_StageI_GetBLUPs.html
-  - text: "Cross-val. round 1"
+  - text: Cross-val. round 1
     href: IITA_StageII_CheckPredictionAccuracy1.html
-  - text: "Cross-val. round 2"
+  - text: Cross-val. round 2
     href: IITA_StageII_CheckPredictionAccuracy2.html
-  - text: "Get GEBV for GS C4"
+  - text: Get GEBV for GS C4
     href: IITA_StageII_Predict_C4.html
-  - text: "License"
+  - text: License
     href: license.html
+  right:
+  - icon: fa-github
+    text: Source code
+    href: https://github.com/wolfemd/NGC_Analyses/IITA_2019GS/
 output:
   workflowr::wflow_html:
-    toc: true
-    toc_float: true
+    toc: yes
+    toc_float: yes
     toc_depth: 3
-    collapsed: false
-    number_sections: false
+    collapsed: no
+    number_sections: no
     theme: flatly
     highlight: tango
