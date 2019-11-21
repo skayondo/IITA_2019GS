@@ -8,12 +8,12 @@ navbar:
   - text: "Prepare Training Data"
     href: IITA_PrepareTrainingData.html
   - text: "Stage I: Get BLUPs"
-  - text: "Stage II"
-  - text: "Cross-validation analysis 1"
+    href: IITA_StageI_GetBLUPs.html
+  - text: "Stage II: Cross-validation analysis 1"
     href: IITA_StageII_CheckPredictionAccuracy1.html
-  - text: "Cross-validation analysis 2"
+  - text: "Stage II: Cross-validation analysis 2"
     href: IITA_StageII_CheckPredictionAccuracy2.html
-  - text: "Genomic prediction of GS C4"
+  - text: "Stage II: Genomic prediction of GS C4"
     href: IITA_StageII_Predict_C4.html
   - text: "Contact"
     href: about.html
@@ -26,7 +26,7 @@ output:
     toc_depth: 3
     collapsed: false
     number_sections: false
-    theme: sandstone
+    theme: darkly
     highlight: tango
     css: style.css
     lib_dir: site_libs
