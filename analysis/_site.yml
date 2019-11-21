@@ -5,18 +5,16 @@ navbar:
   left:
   - text: "Synopsis"
     href: index.html
-  - text: "Prepare Training Data"
+  - text: "Prep. Training Data"
     href: IITA_PrepareTrainingData.html
   - text: "Get BLUPs"
     href: IITA_StageI_GetBLUPs.html
-  - text: "Cross-validation round 1"
+  - text: "Cross-val. round 1"
     href: IITA_StageII_CheckPredictionAccuracy1.html
-  - text: "Cross-validation round 2"
+  - text: "Cross-val. round 2"
     href: IITA_StageII_CheckPredictionAccuracy2.html
   - text: "Get GEBV for GS C4"
     href: IITA_StageII_Predict_C4.html
-  - text: "Contact"
-    href: about.html
   - text: "License"
     href: license.html
 output:
@@ -26,8 +24,5 @@ output:
     toc_depth: 3
     collapsed: false
     number_sections: false
-    theme: darkly
+    theme: united
     highlight: tango
-    css: style.css
-    lib_dir: site_libs
-    self_contained: no
