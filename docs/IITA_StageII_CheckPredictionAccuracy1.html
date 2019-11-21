@@ -17,7 +17,7 @@
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link href="site_libs/bootstrap-3.3.5/css/sandstone.min.css" rel="stylesheet" />
+<link href="site_libs/bootstrap-3.3.5/css/darkly.min.css" rel="stylesheet" />
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
@@ -430,16 +430,17 @@ div.tocify {
 <li>
   <a href="IITA_PrepareTrainingData.html">Prepare Training Data</a>
 </li>
-<li class="dropdown-header">Stage I: Get BLUPs</li>
-<li class="dropdown-header">Stage II</li>
 <li>
-  <a href="IITA_StageII_CheckPredictionAccuracy1.html">Cross-validation analysis 1</a>
+  <a href="IITA_StageI_GetBLUPs.html">Stage I: Get BLUPs</a>
 </li>
 <li>
-  <a href="IITA_StageII_CheckPredictionAccuracy2.html">Cross-validation analysis 2</a>
+  <a href="IITA_StageII_CheckPredictionAccuracy1.html">Stage II: Cross-validation analysis 1</a>
 </li>
 <li>
-  <a href="IITA_StageII_Predict_C4.html">Genomic prediction of GS C4</a>
+  <a href="IITA_StageII_CheckPredictionAccuracy2.html">Stage II: Cross-validation analysis 2</a>
+</li>
+<li>
+  <a href="IITA_StageII_Predict_C4.html">Stage II: Genomic prediction of GS C4</a>
 </li>
 <li>
   <a href="about.html">Contact</a>
@@ -584,10 +585,10 @@ This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a> analysis
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongbfffb51"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> bfffb51 </a>
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrong695a797"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> 695a797 </a>
 </p>
 </div>
-<div id="strongRepositoryversionstrongbfffb51" class="panel-collapse collapse">
+<div id="strongRepositoryversionstrong695a797" class="panel-collapse collapse">
 <div class="panel-body">
 <p>
 Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility. The version displayed above was the version of the Git repository at the time these results were generated. <br><br> Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
@@ -688,6 +689,23 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+html
+</td>
+<td>
+a869b9e
+</td>
+<td>
+wolfemd
+</td>
+<td>
+2019-11-21
+</td>
+<td>
+Build site.
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -968,6 +986,43 @@ Note filepath is to a non-public location, for the time being.</p>
 <span id="cb14-8"><a href="#cb14-8"></a><span class="st">      </span><span class="kw">theme</span>(<span class="dt">axis.text.x =</span> <span class="kw">element_text</span>(<span class="dt">angle=</span><span class="dv">90</span>,<span class="dt">face=</span><span class="st">&#39;bold&#39;</span>)) <span class="op">+</span></span>
 <span id="cb14-9"><a href="#cb14-9"></a><span class="st">      </span><span class="kw">scale_fill_viridis_d</span>()</span></code></pre></div>
 <p><img src="figure/IITA_StageII_CheckPredictionAccuracy1.Rmd/unnamed-chunk-14-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-unnamed-chunk-14-1">
+Past versions of unnamed-chunk-14-1.png
+</button>
+</p>
+<div id="fig-unnamed-chunk-14-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+a869b9e
+</td>
+<td>
+wolfemd
+</td>
+<td>
+2019-11-21
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div id="figure-2" class="section level2">
 <h2>Figure 2</h2>
@@ -982,6 +1037,43 @@ Note filepath is to a non-public location, for the time being.</p>
 <span id="cb15-8"><a href="#cb15-8"></a><span class="st">      </span><span class="kw">theme</span>(<span class="dt">axis.text.x =</span> <span class="kw">element_text</span>(<span class="dt">angle=</span><span class="dv">90</span>,<span class="dt">face=</span><span class="st">&#39;bold&#39;</span>)) <span class="op">+</span></span>
 <span id="cb15-9"><a href="#cb15-9"></a><span class="st">      </span><span class="kw">scale_fill_viridis_d</span>()</span></code></pre></div>
 <p><img src="figure/IITA_StageII_CheckPredictionAccuracy1.Rmd/unnamed-chunk-15-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-unnamed-chunk-15-1">
+Past versions of unnamed-chunk-15-1.png
+</button>
+</p>
+<div id="fig-unnamed-chunk-15-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+a869b9e
+</td>
+<td>
+wolfemd
+</td>
+<td>
+2019-11-21
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div id="figure-3" class="section level2">
 <h2>Figure 3</h2>
@@ -997,6 +1089,43 @@ Note filepath is to a non-public location, for the time being.</p>
 <span id="cb16-9"><a href="#cb16-9"></a>            <span class="dt">legend.position =</span> <span class="st">&quot;top&quot;</span>) <span class="op">+</span></span>
 <span id="cb16-10"><a href="#cb16-10"></a><span class="st">      </span><span class="kw">scale_fill_viridis_d</span>()</span></code></pre></div>
 <p><img src="figure/IITA_StageII_CheckPredictionAccuracy1.Rmd/unnamed-chunk-16-1.png" width="864" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-unnamed-chunk-16-1">
+Past versions of unnamed-chunk-16-1.png
+</button>
+</p>
+<div id="fig-unnamed-chunk-16-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+a869b9e
+</td>
+<td>
+wolfemd
+</td>
+<td>
+2019-11-21
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div id="figure-4" class="section level2">
 <h2>Figure 4</h2>
@@ -1012,6 +1141,43 @@ Note filepath is to a non-public location, for the time being.</p>
 <span id="cb17-9"><a href="#cb17-9"></a>            <span class="dt">legend.position =</span> <span class="st">&#39;none&#39;</span>) <span class="op">+</span></span>
 <span id="cb17-10"><a href="#cb17-10"></a><span class="st">      </span><span class="kw">scale_fill_viridis_d</span>()</span></code></pre></div>
 <p><img src="figure/IITA_StageII_CheckPredictionAccuracy1.Rmd/unnamed-chunk-17-1.png" width="864" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-unnamed-chunk-17-1">
+Past versions of unnamed-chunk-17-1.png
+</button>
+</p>
+<div id="fig-unnamed-chunk-17-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+a869b9e
+</td>
+<td>
+wolfemd
+</td>
+<td>
+2019-11-21
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div id="figure-5" class="section level2">
 <h2>Figure 5</h2>
@@ -1027,6 +1193,43 @@ Note filepath is to a non-public location, for the time being.</p>
 <span id="cb18-9"><a href="#cb18-9"></a>            <span class="dt">legend.position =</span> <span class="st">&#39;none&#39;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">lims</span>(<span class="dt">y=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">1</span>)) <span class="op">+</span><span class="st"> </span></span>
 <span id="cb18-10"><a href="#cb18-10"></a><span class="st">      </span><span class="kw">scale_fill_viridis_d</span>()</span></code></pre></div>
 <p><img src="figure/IITA_StageII_CheckPredictionAccuracy1.Rmd/unnamed-chunk-18-1.png" width="864" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-unnamed-chunk-18-1">
+Past versions of unnamed-chunk-18-1.png
+</button>
+</p>
+<div id="fig-unnamed-chunk-18-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+a869b9e
+</td>
+<td>
+wolfemd
+</td>
+<td>
+2019-11-21
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <br>
 <p>
 <button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
