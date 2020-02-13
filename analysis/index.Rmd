@@ -13,9 +13,9 @@ Purpose of this section will be for background, summary, notes and future direct
 
 1. [Prepare the training data](IITA_PrepareTrainingData.html)
 2. [Stage I: Get BLUPs](IITA_StageI_GetBLUPs.html)
-3. [Stage II: Cross-validation Run 1](IITA_StageII_CheckPredictionAccuracy1.Rmd)
-4. [Stage II: Cross-validation Run 2](IITA_StageII_CheckPredictionAccuracy2.Rmd)
-5. [Stage II: Genomic prediction of GS C4](IITA_StageII_Predict_C4.Rmd)
+3. [Stage II: Cross-validation Run 1](IITA_StageII_CheckPredictionAccuracy1.html)
+4. [Stage II: Cross-validation Run 2](IITA_StageII_CheckPredictionAccuracy2.html)
+5. [Stage II: Genomic prediction of GS C4](IITA_StageII_Predict_C4.html)
 
 
 # Standardization ToDo's
