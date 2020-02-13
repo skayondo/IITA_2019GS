@@ -175,7 +175,6 @@ saveRDS(asModelsFit,file="data/iita_blupsForCrossVal_72619.rds")
 # Curate field data
 
 Redo set-up of training data chunks. Based on preliminary results, discontinued anlaysis for the yield trait variants. 
-
 Curation in this case is just outlier removal based on residuals, followed by refitting of the Stage I mixed-model to get new BLUPs.
 ```{r, eval=F}
 rm(list=ls()); gc()
@@ -216,6 +215,7 @@ phenos %<>%
                               "+ at(IncompleteBlocks,'Yes'):blockInRep"))
 
 ```
+
 ## Function to detect outliers
 
 Refit mixed-models and this time recover studentized residuals and flag outliers as observations with |studentized-residuals|>3.3
@@ -258,7 +258,9 @@ fitASmodelsWithOutlierDetect<-function(asFixedFormula,asRandFormula,TrainingData
             Outliers=list(outliers))
   return(out) }
 ```
-## Run two cycles of outlier remval
+
+## Run two cycles of outlier removal
+
 Fit models with asreml
 ```{r, eval=F}
 library(furrr)
@@ -306,4 +308,4 @@ saveRDS(asModelsFit,file="data/iita_blupsForCrossVal_outliersRemoved_73019.rds")
 
 # Next step
 
-[Stage II: Cross-validation Run 1](IITA_StageII_CheckPredictionAccuracy1.Rmd)
+[Stage II: Cross-validation Run 1](IITA_StageII_CheckPredictionAccuracy1.html)

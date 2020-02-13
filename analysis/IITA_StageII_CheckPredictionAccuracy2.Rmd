@@ -206,3 +206,6 @@ cv %>%
       scale_fill_viridis_d()
 ```
 
+# Next step
+
+[Stage II: Cross-validation Run 2](IITA_StageII_Predict_C4.html)

@@ -27,7 +27,7 @@ Isolate sets of folds within different chunks of the TP:
 
 See code below and a diagram in the results section below that for more detail. 
 
-![Cross-validation scheme](output/sketch_of_crossVal_scheme.png)
+![Cross-validation scheme](../output/sketch_of_crossVal_scheme.png)
 
 
 # Make a kinship matrix
@@ -356,3 +356,6 @@ cv %>% filter(Dataset=="HistoricalDataIncluded") %>%
       scale_fill_viridis_d()
 ```
 
+# Next step
+
+[Stage II: Cross-validation Run 2](IITA_StageII_CheckPredictionAccuracy2.html)
