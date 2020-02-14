@@ -15,6 +15,8 @@ navbar:
     href: IITA_StageII_CheckPredictionAccuracy2.html
   - text: Get GEBV for GS C4
     href: IITA_StageII_Predict_C4.html
+  - text: Est. Genetic Gain
+    href: GetGainEst.html
   - text: License
     href: license.html
   right:
